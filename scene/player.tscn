@@ -6,6 +6,7 @@
 
 [sub_resource type="GDScript" id="GDScript_hjaqi"]
 script/source = "extends CharacterBody2D
+signal health_change(new_health: int)
 @onready var animated_sprite_2d: AnimatedSprite2D = $AnimatedSprite2D
 @onready var swing: AudioStreamPlayer2D = $swing
 @onready var hitbox: Area2D = $Hitbox
@@ -110,7 +111,7 @@ func take_damage (amount: int) -> void:
 			return
 		take_damage_sound.play()
 		health -= amount
-		print(health)
+		emit_signal(\"health_change\", health)
 		if health <= 0:
 			die()
 		damagecooldown.start()
@@ -118,7 +119,9 @@ func take_damage (amount: int) -> void:
 func die() -> void:
 	animated_sprite_2d.play(\"death\")
 	alive = false
-	
+	await animated_sprite_2d.animation_finished
+	await get_tree().create_timer(1.0).timeout
+	get_tree().reload_current_scene()
 "
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_4reak"]

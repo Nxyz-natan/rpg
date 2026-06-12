@@ -1,0 +1,42 @@
+[gd_scene format=3 uid="uid://bmv6ef7i1ojif"]
+
+[ext_resource type="Script" uid="uid://bnn5frc7dodlq" path="res://scripts/hud.gd" id="1_o8u2p"]
+[ext_resource type="Texture2D" uid="uid://cqgqy4vndmlgu" path="res://Ninja Adventure - Asset Pack/Ui/Receptacle/fullHeart.png" id="1_s3k51"]
+
+[node name="HUD" type="CanvasLayer" unique_id=1636529968]
+script = ExtResource("1_o8u2p")
+
+[node name="hearts" type="HBoxContainer" parent="." unique_id=288078755]
+offset_right = 101.0
+offset_bottom = 16.0
+scale = Vector2(3, 3)
+
+[node name="heart1" type="TextureRect" parent="hearts" unique_id=31243816]
+texture_filter = 1
+layout_mode = 2
+texture = ExtResource("1_s3k51")
+stretch_mode = 2
+
+[node name="heart2" type="TextureRect" parent="hearts" unique_id=1042604265]
+texture_filter = 1
+layout_mode = 2
+texture = ExtResource("1_s3k51")
+stretch_mode = 2
+
+[node name="heart3" type="TextureRect" parent="hearts" unique_id=958062340]
+texture_filter = 1
+layout_mode = 2
+texture = ExtResource("1_s3k51")
+stretch_mode = 2
+
+[node name="heart4" type="TextureRect" parent="hearts" unique_id=320997671]
+texture_filter = 1
+layout_mode = 2
+texture = ExtResource("1_s3k51")
+stretch_mode = 2
+
+[node name="heart5" type="TextureRect" parent="hearts" unique_id=199324091]
+texture_filter = 1
+layout_mode = 2
+texture = ExtResource("1_s3k51")
+stretch_mode = 2
