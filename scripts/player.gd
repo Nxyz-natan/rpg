@@ -1,68 +1,83 @@
 extends CharacterBody2D
+@onready var animated_sprite_2d: AnimatedSprite2D = $AnimatedSprite2D
+@onready var swing: AudioStreamPlayer2D = $swing
+@onready var hitbox: Area2D = $Hitbox
 
-@export var SPEED = 100.0
-var current_dir = "none"
 
-func _physics_process(delta):
-	player_movement(delta)
+const SPEED = 300.0
+var last_direction: Vector2 = Vector2.RIGHT
+var is_attacking: bool = false
+var hitbox_offset: Vector2
 
-func player_movement(delta):
+func _ready() -> void:
+	hitbox_offset = hitbox.position
+
+
+
+func _physics_process(_delta: float) -> void:
 	
-	
-	if Input.is_action_pressed("ui_right"):
-		current_dir = "right"
-		play_anim(1)
-		velocity.x = SPEED
-		velocity.y = 0
-	elif  Input.is_action_pressed("ui_left"):
-		play_anim(1)
-		current_dir = "left"
-		velocity.x = -SPEED
-		velocity.y = 0
-	elif  Input.is_action_pressed("ui_down"):
-		play_anim(1)
-		current_dir = "down"
-		velocity.y = SPEED
-		velocity.x = 0
-	elif  Input.is_action_pressed("ui_up"):
-		play_anim(1)
-		current_dir = "up"
-		velocity.y = -SPEED
-		velocity.x = 0
-	else :
-		play_anim(0)
-		velocity.x = 0
-		velocity.y = 0
-	
+	if Input.is_action_just_pressed("attack") and not is_attacking:
+		attack()
+	if is_attacking:
+		velocity = Vector2.ZERO
+		return
+	process_movment()
+	process_animation()
 	move_and_slide()
-func play_anim(movement):
-	var dir = current_dir
-	var anim = $AnimatedSprite2D
+
+
+func process_movment() -> void:
+		# Get the input direction and handle the movement/deceleration.
+	# As good practice, you should replace UI actions with custom gameplay actions.
+	var direction := Input.get_vector("left","right","up","down")
 	
-	if dir == "right":
-		anim.flip_h = false
-		if movement == 1:
-			anim.play("side_walk")
-		elif movement == 0:
-			anim.play("side_idle")
+	if direction != Vector2.ZERO:
+		velocity = direction * SPEED
+		last_direction = direction
+		update_hitbox_offset()
+	else :
+		velocity = Vector2.ZERO
+
+	
+	
+func process_animation() -> void:
+	if is_attacking:
+		return
+	if velocity != Vector2.ZERO:
+		play_animation("run",last_direction)
+	else:
+		play_animation("idle",last_direction)
+	
+func play_animation(prefix: String, dir: Vector2) -> void:
+	if dir.x != 0:
+		animated_sprite_2d.flip_h = dir.x <0
+		animated_sprite_2d.play(prefix +"_right")
+	elif  dir.y <0:
+		animated_sprite_2d.play(prefix +"_up")
+	elif  dir.y >0:
+		animated_sprite_2d.play(prefix +"_down")
 		
-			
-	if dir == "left":
-		anim.flip_h = true
-		if movement == 1:
-			anim.play("side_walk")
-		elif movement == 0:
-			anim.play("side_idle")
-	if dir == "down":
-		anim.flip_h = false
-		if movement == 1:
-			anim.play("front_walk")
-		elif movement == 0:
-			anim.play("front_idle")
-			
-	if dir == "up":
-		anim.flip_h = false
-		if movement == 1:
-			anim.play("back_walk")
-		elif movement == 0:
-			anim.play("back_idle")
+		
+func attack() -> void:
+	is_attacking = true
+	swing.play()
+	play_animation("attack",last_direction)
+
+
+func _on_animated_sprite_2d_animation_finished() -> void:
+	if is_attacking:
+		is_attacking = false
+
+
+func update_hitbox_offset() -> void:
+	var x := hitbox_offset.x
+	var y := hitbox_offset.y
+	match last_direction:
+		Vector2.LEFT:
+			hitbox.position = Vector2(-x,y)
+		Vector2.RIGHT:
+			hitbox.position = Vector2(x,y)
+		Vector2.UP:
+			hitbox.position = Vector2(y,-x)
+		Vector2.DOWN:
+			hitbox.position = Vector2(-y,x)

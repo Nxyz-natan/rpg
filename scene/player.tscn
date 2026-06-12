@@ -1,7 +1,125 @@
 [gd_scene format=3 uid="uid://buca6maq1yo5b"]
 
-[ext_resource type="Script" uid="uid://bjs5m7jwmxc0o" path="res://scene/player.gd" id="1_hjaqi"]
 [ext_resource type="Texture2D" uid="uid://b2cyeeoslks6c" path="res://mystic_woods_free_2/sprites/characters/player.png" id="2_fvtld"]
+[ext_resource type="AudioStream" uid="uid://4tcjbss8msci" path="res://Ninja Adventure - Asset Pack/Audio/Sounds/Hit & Impact/Impact4.wav" id="3_ct4mp"]
+[ext_resource type="AudioStream" uid="uid://dc41373mfy4xh" path="res://Ninja Adventure - Asset Pack/Audio/Sounds/Whoosh & Slash/Whoosh.wav" id="3_fvtld"]
+
+[sub_resource type="GDScript" id="GDScript_hjaqi"]
+script/source = "extends CharacterBody2D
+@onready var animated_sprite_2d: AnimatedSprite2D = $AnimatedSprite2D
+@onready var swing: AudioStreamPlayer2D = $swing
+@onready var hitbox: Area2D = $Hitbox
+@onready var take_damage_sound: AudioStreamPlayer2D = $Take_damage
+@onready var damagecooldown: Timer = $damagecooldown
+
+
+const SPEED = 300.0
+var last_direction: Vector2 = Vector2.RIGHT
+var is_attacking: bool = false
+var hitbox_offset: Vector2
+var alive: bool = true
+var max_health: int = 100
+var health: int = 100
+var strength: int = 20
+
+func _ready() -> void:
+	hitbox_offset = hitbox.position
+
+
+
+func _physics_process(_delta: float) -> void:
+	
+	hitbox.monitoring = false
+	if alive:
+		if Input.is_action_just_pressed(\"attack\") and not is_attacking:
+			attack()
+		if is_attacking:
+			velocity = Vector2.ZERO
+			return
+		process_movment()
+		process_animation()
+		move_and_slide()
+
+
+func process_movment() -> void:
+		# Get the input direction and handle the movement/deceleration.
+	# As good practice, you should replace UI actions with custom gameplay actions.
+	var direction := Input.get_vector(\"left\",\"right\",\"up\",\"down\")
+	
+	if direction != Vector2.ZERO:
+		velocity = direction * SPEED
+		last_direction = direction
+		update_hitbox_offset()
+	else :
+		velocity = Vector2.ZERO
+
+	
+	
+func process_animation() -> void:
+	if is_attacking:
+		return
+	if velocity != Vector2.ZERO:
+		play_animation(\"run\",last_direction)
+	else:
+		play_animation(\"idle\",last_direction)
+	
+func play_animation(prefix: String, dir: Vector2) -> void:
+	if dir.x != 0:
+		animated_sprite_2d.flip_h = dir.x <0
+		animated_sprite_2d.play(prefix +\"_right\")
+	elif  dir.y <0:
+		animated_sprite_2d.play(prefix +\"_up\")
+	elif  dir.y >0:
+		animated_sprite_2d.play(prefix +\"_down\")
+		
+		
+func attack() -> void:
+	is_attacking = true
+	hitbox.monitoring = true
+	swing.play()
+	play_animation(\"attack\",last_direction)
+
+
+func _on_animated_sprite_2d_animation_finished() -> void:
+	if is_attacking:
+		is_attacking = false
+
+
+func update_hitbox_offset() -> void:
+	var x := hitbox_offset.x
+	var y := hitbox_offset.y
+	match last_direction:
+		Vector2.LEFT:
+			hitbox.position = Vector2(-x,y)
+		Vector2.RIGHT:
+			hitbox.position = Vector2(x,y)
+		Vector2.UP:
+			hitbox.position = Vector2(y,-x)
+		Vector2.DOWN:
+			hitbox.position = Vector2(-y,x)
+
+
+func _on_hitbox_body_entered(body: Node2D) -> void:
+	if is_attacking and body.name.begins_with(\"slime\"):
+		body.take_damage(strength, position)
+
+
+func take_damage (amount: int) -> void:
+	if alive:
+		if damagecooldown.time_left > 0:
+			return
+		take_damage_sound.play()
+		health -= amount
+		print(health)
+		if health <= 0:
+			die()
+		damagecooldown.start()
+
+func die() -> void:
+	animated_sprite_2d.play(\"death\")
+	alive = false
+	
+"
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_4reak"]
 atlas = ExtResource("2_fvtld")
@@ -413,15 +531,49 @@ animations = [{
 "speed": 7.0
 }]
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_hjaqi"]
+size = Vector2(10, 9.75)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_fvtld"]
+size = Vector2(17.75, 16.75)
+
 [node name="player" type="CharacterBody2D" unique_id=1180038685]
 scale = Vector2(4, 4)
-script = ExtResource("1_hjaqi")
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1090285488]
+script = SubResource("GDScript_hjaqi")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1435232542]
 texture_filter = 1
 sprite_frames = SubResource("SpriteFrames_m5j3d")
-animation = &"attack_down"
+animation = &"idle_down"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=848917721]
+position = Vector2(0.25, 12.625)
+shape = SubResource("RectangleShape2D_hjaqi")
+
+[node name="swing" type="AudioStreamPlayer2D" parent="." unique_id=1857757038]
+stream = ExtResource("3_fvtld")
+
+[node name="Hitbox" type="Area2D" parent="." unique_id=1180995991]
+position = Vector2(11.75, -0.5)
+collision_mask = 2
+metadata/_edit_group_ = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox" unique_id=1090285488]
+position = Vector2(1.375, 9.875)
+shape = SubResource("RectangleShape2D_fvtld")
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=1149887043]
+limit_left = 0
+limit_top = 0
+limit_right = 3136
+limit_bottom = 1344
+
+[node name="Take_damage" type="AudioStreamPlayer2D" parent="." unique_id=1235504508]
+stream = ExtResource("3_ct4mp")
+
+[node name="damagecooldown" type="Timer" parent="." unique_id=1173592544]
+wait_time = 0.5
+one_shot = true
 
 [connection signal="animation_finished" from="AnimatedSprite2D" to="." method="_on_animated_sprite_2d_animation_finished"]
+[connection signal="body_entered" from="Hitbox" to="." method="_on_hitbox_body_entered"]

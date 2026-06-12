@@ -15,6 +15,11 @@ run/main_scene="uid://c8i68o0isxjpo"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://mystic_woods_free_2/icon.svg"
 
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+
 [editor_plugins]
 
 enabled=PackedStringArray("res://addons/godot_super-wakatime/plugin.cfg")
